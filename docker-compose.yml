@@ -1,0 +1,59 @@
+services:
+  sybase:
+    image: postgres:16-alpine
+    container_name: warehouse-sybase
+    ports:
+      - "5000:5432"
+    environment:
+      POSTGRES_DB: warehouse
+      POSTGRES_USER: warehouse_user
+      POSTGRES_PASSWORD: warehouse_pass
+    volumes:
+      - sybase-data:/var/lib/postgresql/data
+      - ./docker/sybase/init-postgres.sql:/docker-entrypoint-initdb.d/init-postgres.sql:ro
+    networks:
+      - warehouse-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U warehouse_user -d warehouse"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  wildfly:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: warehouse-wildfly
+    ports:
+      - "8080:8080"
+      - "9990:9990"
+    depends_on:
+      sybase:
+        condition: service_healthy
+    environment:
+      - DB_HOST=sybase
+      - DB_PORT=5432
+      - DB_NAME=warehouse
+      - DB_USER=warehouse_user
+      - DB_PASSWORD=warehouse_pass
+    networks:
+      - warehouse-net
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: warehouse-angular
+    ports:
+      - "4200:80"
+    depends_on:
+      - wildfly
+    networks:
+      - warehouse-net
+
+volumes:
+  sybase-data:
+
+networks:
+  warehouse-net:
+    driver: bridge

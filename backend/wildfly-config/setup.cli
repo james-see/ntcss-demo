@@ -1,0 +1,30 @@
+# jboss-cli commands to configure Sybase datasource and Elytron
+# Run with: /opt/jboss/wildfly/bin/jboss-cli.sh --connect --file=/opt/jboss/wildfly/setup.cli
+
+# Start embedded server
+embed-server --std-out=echo
+
+# Add Sybase module (if driver exists)
+# Add Sybase JDBC driver as a module
+module add --name=com.sybase --resources=/tmp/jconn4.jar --dependencies=javax.api,javax.transaction.api
+
+# Add Sybase datasource
+data-source add --name=warehouseDS \
+    --jndi-name=java:/jdbc/warehouseDS \
+    --driver-name=sybase \
+    --connection-url="jdbc:sybase:Tds:sybase:5000/warehouse" \
+    --user-name=warehouse_user \
+    --password=warehouse_pass \
+    --min-pool-size=5 \
+    --max-pool-size=20 \
+    --enabled=true
+
+# Register the driver
+/subsystem=datasources/jdbc-driver=sybase:add(driver-name="sybase", driver-module="com.sybase", driver-class-name="com.sybase.jdbc4.jdbc.SybDriver", xa-datasource-class="com.sybase.jdbc4.jdbc.SybXADataSource")
+
+# Add application users for Elytron (BASIC auth)
+# Properties files already exist in the default config
+# We just need to add users to application-users.properties
+
+# Reload the server
+reload

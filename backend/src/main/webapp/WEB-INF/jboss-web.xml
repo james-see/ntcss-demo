@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jboss-web xmlns="http://www.jboss.com/xml/ns/javaee"
+           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xsi:schemaLocation="http://www.jboss.com/xml/ns/javaee http://www.jboss.org/j2ee/schema/jboss-web_12_0.xsd"
+           version="12.0">
+
+    <!-- Use Elytron security domain -->
+    <security-domain>other</security-domain>
+
+    <!-- Data source reference -->
+    <resource-ref>
+        <res-ref-name>jdbc/warehouseDS</res-ref-name>
+        <res-type>javax.sql.DataSource</res-type>
+        <jndi-name>java:/jdbc/warehouseDS</jndi-name>
+    </resource-ref>
+
+    <!-- Context root -->
+    <context-root>/warehouse</context-root>
+</jboss-web>
