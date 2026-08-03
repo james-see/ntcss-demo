@@ -34,6 +34,9 @@ RUN touch /opt/jboss/wildfly/standalone/deployments/warehouse-backend.war.dodepl
 RUN printf '#!/bin/bash\nset -e\n\n# Start WildFly in background\n/opt/jboss/wildfly/bin/standalone.sh -b 0.0.0.0 -bmanagement 0.0.0.0 &\nWFLY_PID=$!\n\n# Wait for WildFly to start\necho "Waiting for WildFly to boot..."\nsleep 20\n\n# Register Postgres JDBC driver\necho "Registering Postgres JDBC driver..."\n/opt/jboss/wildfly/bin/jboss-cli.sh --connect --command="/subsystem=datasources/jdbc-driver=postgres:add(driver-name=postgres,driver-module-name=org.postgresql,driver-class-name=org.postgresql.Driver,driver-xa-datasource-class-name=org.postgresql.xa.PGXADataSource)" 2>&1 || true\n\n# Add datasource (connects to Postgres running as our Sybase-compatible DB)\necho "Adding warehouse datasource..."\n/opt/jboss/wildfly/bin/jboss-cli.sh --connect --command="data-source add --name=warehouseDS --jndi-name=java:/jdbc/warehouseDS --driver-name=postgres --connection-url=jdbc:postgresql://sybase:5432/warehouse --user-name=warehouse_user --password=warehouse_pass --min-pool-size=5 --max-pool-size=20 --enabled=true" 2>&1 || true\n\necho "Datasource configuration complete."\n\n# Keep WildFly running\nwait $WFLY_PID\n' > /opt/jboss/wildfly/start.sh
 RUN chmod +x /opt/jboss/wildfly/start.sh
 
+# Create an admin user for the WildFly management console (localhost:9990)
+RUN printf '\nyes\n' | /opt/jboss/wildfly/bin/add-user.sh -u admin -p admin123! 2>/dev/null
+
 # Fix permissions
 RUN chown -R jboss:jboss /opt/jboss/wildfly/standalone/
 
